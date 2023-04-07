@@ -50,6 +50,7 @@ checkDat(dat = megaShape, inv = inv)
 clonalDF <- read.csv("../clonalDF.csv")
 
 #### AZs data ####
+# from doi: Cover and density of semi-desert grassland plants in permanent quadrats mapped from 1915 to 1947, Anderson, McClaran and Adler 2012; 10.1126/science.127.3295.414-b
 tempDat <- megaShape[megaShape$Site == "AZs" ,]
 tempDat <- tempDat[!duplicated(tempDat),]
 AZs_demo_dorm1_buff5_buffG05 <- trackSpp(dat = tempDat, inv = inv, dorm = 1, buff = .05, buffGenet = .005, clonal = clonalDF, aggByGenet = FALSE)
@@ -69,6 +70,10 @@ data_folder <- "./Data/"
 saveRDS(AZs_demo_dorm1_buff5_buffG05_aggregated, file = paste0(data_folder, "AZs_buff5_dorm1_demoDat.RDS"))
 
 #### CO data ####
+## from Cover, density, and demographics of shortgrass steppe plants mapped 1997–2010 
+# in permanent grazed and ungrazed quadrats; Chu, Norman, Flynn, Kaplan,  Lauenroth, 
+# and Adler, 2013; https://doi.org/10.1890/13-0121.1
+
 tempDat <- megaShape[megaShape$Site == "CO" ,]
 # remove a duplicate
 tempDat <- tempDat[!duplicated(tempDat),]
@@ -92,6 +97,9 @@ for (i in 1:length(unique(test$Quad))) {
 saveRDS(CO_demo_dorm1_buff5_buffG05_aggregated, file = paste0(data_folder, "../CO_buff5_dorm1_demoDat.RDS"))
 
 #### ID data ####
+##  from Mapped quadrats in sagebrush steppe: long-term data for analyzing demographic 
+# rates and plant—plant interactions, Zachmann, Moffet and Adler, 2010.; DOI: 10.2307/20788177
+
 tempDat <- megaShape[megaShape$Site == "ID" ,]
 # remove a duplicate
 tempDat <- tempDat[!duplicated(tempDat),]
@@ -111,6 +119,9 @@ for (i in 1:length(unique(tempDat$Quad))) {
 saveRDS(ID_demo_dorm1_buff5_buffG05_aggregated, file = paste0(data_folder, "../ID_buff5_dorm1_demoDat.RDS"))
 
 #### MT data ####
+## from Fourteen years of mapped, permanent quadrats in a northern mixed prairie, USA, 
+# Anderson, Vermeire and  Adler 2011; DOI: 10.2307/23034897
+
 tempDat <- megaShape[megaShape$Site == "MT" ,]
 # remove a duplicate
 tempDat <- tempDat[!duplicated(tempDat),]
@@ -130,6 +141,9 @@ for (i in 1:length(unique(tempDat$Quad))) {
 saveRDS(MT_demo_dorm1_buff5_buffG05_aggregated, file = paste0(data_folder, "../MT_buff5_dorm1_demoDat.RDS"))
 
 #### KS data ####
+## from LONG-TERM MAPPED QUADRATS FROM KANSAS PRAIRIE: DEMOGRAPHIC INFORMATION FOR 
+# HERBACEOUS PLANTS, Adler, Tyburczy, and Lauenroth, 2007; https://doi.org/10.1890/0012-9658(2007)88[2673:LMQFKP]2.0.CO;2
+
 tempDat <- megaShape[megaShape$Site == "KS" ,]
 # remove a duplicate
 tempDat <- tempDat[!duplicated(tempDat),]
@@ -149,6 +163,10 @@ for (i in 1:length(unique(tempDat$Quad))) {
 saveRDS(KS_demo_dorm1_buff5_buffG05_aggregated, file = paste0(data_folder, "../KS_buff5_dorm1_demoDat.RDS"))
 
 #### NM data ####
+## from Quadrat‐based monitoring of desert grassland vegetation at the Jornada 
+# Experimental Range, New Mexico, 1915–2016, Christensen, James, Maxwell, 
+# Slaughter, Adler, Havstad and Bestelmeyer, 2021; 10.1002/ecy.3530
+
 tempDat <- megaShape[megaShape$Site == "NM" ,] %>%
   mutate(Year = as.integer(Year), Quad = str_to_upper(Quad))
 ## change the appropriate years for the NM dataset
@@ -184,6 +202,10 @@ for (i in 1:length(unique(tempDat$Quad))) {
 saveRDS(NM_demo_dorm1_buff5_buffG05_aggregated, file = paste0(data_folder, "../NM_buff5_dorm1_demoDat.RDS"))
 
 #### AZn data ####
+## from Cover and density of southwestern ponderosa pine understory plants in 
+# permanent chart quadrats (2002‐2020), Moore, Jenness, Laughlin, Strahan, Bakker, 
+# Dowling and Springer, 2022; 10.1002/ecy.3661
+
 AZn_all <- readRDS("../../Data/ChartQuadDatasets/AZn_downloaded data/AZn_readyToGo.RDS")
 
 # make quadrat inventory list
