@@ -1,4 +1,4 @@
-//## basic growth model: size_tplus1 ~ normal(alpha + Beta_1 * basalArea_genet + Beta_2 * age + Beta_3 * Year + Beta_4 * individualID, sigma)
+//## basic growth model: size_tplus1 ~ normal(alpha + Beta_1 * basalArea_genet + Beta_2 * age , sigma)
 // use QR reparameterization ("Consequently, this QR reparameterization is recommended for linear and generalized linear models in Stan whenever 
 //K > 1 and you do not have an informative prior on the location of  β" - from the Stan manual)
 
