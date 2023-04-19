@@ -35,8 +35,6 @@ newData$survives_tplus1 <-  predict(survMod,
         newdata = newData, 
         type = "response")
 
-
-
 ggplot(data = hesCom, aes(x = basalArea_genet, y = survives_tplus1)) + 
   geom_jitter(aes(col = as.factor(age)), height = .01, alpha = .5) + 
   geom_smooth(aes(col = as.factor(age)),se = FALSE, method = "glm", method.args = list(family = "binomial"))
@@ -48,20 +46,19 @@ amod <- aov(survives_tplus1 ~ basalArea_genet, hesCom)
 
 
 # Prepare data for growth data --------------------------------------------
-## basic growth model: size_tplus1 ~ normal(alpha + Beta * basalArea_genet, sigma)
+## basic growth model: size_tplus1 ~ normal(alpha + (Beta_1 * basalArea_genet) + (Beta_2 * age), sigma)
+# remove data for individuals that didn't survive
+hesCom_growth <- hesCom[hesCom$survives_tplus1 == 1 & !is.na(hesCom$survives_tplus1) & 
+                          !is.na(hesCom$age)  ,]
+## prepare data for Stan model
+modMat <- model.matrix(~ basalArea_genet + age , data = hesCom_growth)
+data <- with(hesCom_growth, 
+             list(y = size_tplus1, x = modMat, K = ncol(modMat), N = nrow(hesCom_growth)))
 
-## Stan model: 
-growthMod <- "data {
-  int<lower=0> N; // number of data items
-  int<lower=0> K; // number of predictors 
-  matrix[N, K] x;   // predictor matrix
-  vector[N] y;      // outcome vector
-}
-parameters {
-  real alpha;           // intercept
-  vector[K] beta;       // coefficients for predictors
-  real<lower=0> sigma;  // error scale
-}
-model {
-  y ~ normal(x * beta + alpha, sigma);  // likelihood
-}"
+## run Stan model: 
+growthStan <- stan_model("./AnalysisScripts/StanModels/growthModel.stan")
+
+growthStan_fit <- sampling(growthStan, data = data, chains = 2, iter = 2000)
+
+
+
