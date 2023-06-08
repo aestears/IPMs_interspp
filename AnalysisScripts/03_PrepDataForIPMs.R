@@ -28,12 +28,6 @@ hesCom$Species <- "Hesperostipa comata"
 # visualize survival and growth for this species
 survDat <- hesCom[is.na(hesCom$survives_tplus1) != TRUE,]
 survMod <- glm(survives_tplus1 ~ basalArea_genet + Site + as.factor(age), data = survDat, family = "binomial")
-newData <- data.frame("basalArea_genet" <- seq(from = min(hesCom$basalArea_genet), 
-                                               to = max(hesCom$basalArea_genet), 
-                                               length.out = length(hesCom$basalArea_genet)))
-newData$survives_tplus1 <-  predict(survMod, 
-        newdata = newData, 
-        type = "response")
 
 ggplot(data = hesCom, aes(x = basalArea_genet, y = survives_tplus1)) + 
   geom_jitter(aes(col = as.factor(age)), height = .01, alpha = .5) + 
@@ -43,9 +37,7 @@ ggplot(data = hesCom, aes(x = basalArea_genet, y = survives_tplus1)) +
 ## basic survival model glmer(survives_tplus1 ~ basalArea_genet + Site + age + (1|Year), family = "binomial")
 amod <- aov(survives_tplus1 ~ basalArea_genet, hesCom)
 
-
-
-# Prepare data for growth data --------------------------------------------
+# Prepare data for growth model --------------------------------------------
 ## basic growth model: size_tplus1 ~ normal(alpha + (Beta_1 * basalArea_genet) + (Beta_2 * age), sigma)
 # remove data for individuals that didn't survive
 hesCom_growth <- hesCom[hesCom$survives_tplus1 == 1 & !is.na(hesCom$survives_tplus1) & 
@@ -58,7 +50,9 @@ data <- with(hesCom_growth,
 ## run Stan model: 
 growthStan <- stan_model("./AnalysisScripts/StanModels/growthModel.stan")
 
-growthStan_fit <- sampling(growthStan, data = data, chains = 2, iter = 2000)
+growthStan_fit <- sampling(growthStan, data = data, chains = 3, iter = 5000)
 
 
-
+# Prepare data for survival model --------------------------------------------
+hesCom_surv <- hesCom[hesCom$survives_tplus1 == 1 & !is.na(hesCom$survives_tplus1) & 
+                        !is.na(hesCom$age)  ,]
