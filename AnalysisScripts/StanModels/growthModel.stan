@@ -23,7 +23,7 @@ parameters {
   real<lower=0> sigma;  // error scale
 }
 model {
-  y ~ normal(Q_ast * theta + alpha, sigma);  // likelihood
+  y ~ binomial(Q_ast * theta + alpha, sigma);  // likelihood
 }
 generated quantities {
   vector[K] beta;

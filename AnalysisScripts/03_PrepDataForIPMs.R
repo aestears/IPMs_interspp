@@ -10,6 +10,7 @@ library(plantTracker)
 library(sf)
 library(mapview)
 library(rstan)
+library(bayesplot)
 
 # Load data from previous script ------------------------------------------
 source("./AnalysisScripts/02_RecruitData.R")
@@ -42,7 +43,7 @@ amod <- aov(survives_tplus1 ~ basalArea_genet, hesCom)
 # remove data for individuals that didn't survive
 hesCom_growth <- hesCom[hesCom$survives_tplus1 == 1 & !is.na(hesCom$survives_tplus1) & 
                           !is.na(hesCom$age)  ,]
-## prepare data for Stan model
+## prepare data for Stan model:
 modMat <- model.matrix(~ basalArea_genet + age , data = hesCom_growth)
 data <- with(hesCom_growth, 
              list(y = size_tplus1, x = modMat, K = ncol(modMat), N = nrow(hesCom_growth)))
@@ -50,9 +51,22 @@ data <- with(hesCom_growth,
 ## run Stan model: 
 growthStan <- stan_model("./AnalysisScripts/StanModels/growthModel.stan")
 
-growthStan_fit <- sampling(growthStan, data = data, chains = 3, iter = 5000)
+growthStan_fit <- sampling(growthStan, data = data, chains = 4, iter = 8000)
 
+## evaluate Stan model: 
+traceplot(growthStan_fit)
 
 # Prepare data for survival model --------------------------------------------
-hesCom_surv <- hesCom[hesCom$survives_tplus1 == 1 & !is.na(hesCom$survives_tplus1) & 
+hesCom_surv <- hesCom[!is.na(hesCom$survives_tplus1) & 
                         !is.na(hesCom$age)  ,]
+
+## prepare data for Stan model
+modMat <- model.matrix(~ basalArea_genet + age , data = hesCom_surv)
+data <- with(hesCom_surv, 
+             list(y = survives_tplus1, x = modMat, K = ncol(modMat), N = nrow(hesCom_surv)))
+
+## run Stan model: 
+survStan <- stan_model("./AnalysisScripts/StanModels/SurvModel.stan")
+
+survStan_fit <- sampling(survStan, data = data, chains = 3, iter = 5000)
+
