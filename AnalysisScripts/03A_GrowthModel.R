@@ -1,5 +1,5 @@
 #/////////////////////////
-# Prepare demographic data for IPM analysis
+# Vital Rate Models: Growth
 # Alice Stears
 # 11 April 2023
 #/////////////////////////
@@ -15,7 +15,8 @@ library(bayesplot)
 # Load data from previous script ------------------------------------------
 source("./AnalysisScripts/02_RecruitData.R")
 
-# decide which species to use ---------------------------------------------
+# Prepare real data for growth model --------------------------------------------
+# decide which species to use 
 # get Hesperostipa comata species from three sites into one data.frame
 MT_hesCom <- MT_demo_dorm1_buff5_buffG05_aggregated[MT_demo_dorm1_buff5_buffG05_aggregated$Species == "Hesperostipa comata",]
 
@@ -25,48 +26,41 @@ ID_hesCom <- ID_demo_dorm1_buff5_buffG05_aggregated[ID_demo_dorm1_buff5_buffG05_
 
 hesCom <- rbind(MT_hesCom, CO_hesCom, ID_hesCom) 
 hesCom$Species <- "Hesperostipa comata"
-
-# visualize survival and growth for this species
-survDat <- hesCom[is.na(hesCom$survives_tplus1) != TRUE,]
-survMod <- glm(survives_tplus1 ~ basalArea_genet + Site + as.factor(age), data = survDat, family = "binomial")
-
-ggplot(data = hesCom, aes(x = basalArea_genet, y = survives_tplus1)) + 
-  geom_jitter(aes(col = as.factor(age)), height = .01, alpha = .5) + 
-  geom_smooth(aes(col = as.factor(age)),se = FALSE, method = "glm", method.args = list(family = "binomial"))
-
-# Prepare data for survival model -----------------------------------------
-## basic survival model glmer(survives_tplus1 ~ basalArea_genet + Site + age + (1|Year), family = "binomial")
-amod <- aov(survives_tplus1 ~ basalArea_genet, hesCom)
-
-# Prepare data for growth model --------------------------------------------
 ## basic growth model: size_tplus1 ~ normal(alpha + (Beta_1 * basalArea_genet) + (Beta_2 * age), sigma)
 # remove data for individuals that didn't survive
 hesCom_growth <- hesCom[hesCom$survives_tplus1 == 1 & !is.na(hesCom$survives_tplus1) & 
                           !is.na(hesCom$age)  ,]
-## prepare data for Stan model:
+
+
+
+# Prepare simulated data for growth model ---------------------------------
+# predictor variables
+# basal area in the current year
+simDat <- data.frame(basalArea_genet = rlnorm(n = 500, meanlog = .0001, sdlog = .6))/10
+hist(simDat$basalArea_genet)
+
+# response variable
+# basal area in the next year
+simDat$size_tplus1 <- 0.0002 + .687 * simDat$basalArea_genet + rnorm(n = nrow(simDat), mean = 0, sd = .01)
+plot(simDat$size_tplus1, simDat$basalArea_genet)
+
+# log-transform data
+simDat$size_t_log <- log(simDat$basalArea_genet)
+simDat$size_tplus1_log <- log(simDat$size_tplus1)
+plot(simDat$size_tplus1_log, simDat$size_t_log)
+
+# Prepare data for Stan model ---------------------------------------------
+
 modMat <- model.matrix(~ basalArea_genet + age , data = hesCom_growth)
 data <- with(hesCom_growth, 
              list(y = size_tplus1, x = modMat, K = ncol(modMat), N = nrow(hesCom_growth)))
 
-## run Stan model: 
+
+# Run Stan model ----------------------------------------------------------
+
 growthStan <- stan_model("./AnalysisScripts/StanModels/growthModel.stan")
 
 growthStan_fit <- sampling(growthStan, data = data, chains = 4, iter = 8000)
 
 ## evaluate Stan model: 
 traceplot(growthStan_fit)
-
-# Prepare data for survival model --------------------------------------------
-hesCom_surv <- hesCom[!is.na(hesCom$survives_tplus1) & 
-                        !is.na(hesCom$age)  ,]
-
-## prepare data for Stan model
-modMat <- model.matrix(~ basalArea_genet + age , data = hesCom_surv)
-data <- with(hesCom_surv, 
-             list(y = survives_tplus1, x = modMat, K = ncol(modMat), N = nrow(hesCom_surv)))
-
-## run Stan model: 
-survStan <- stan_model("./AnalysisScripts/StanModels/SurvModel.stan")
-
-survStan_fit <- sampling(survStan, data = data, chains = 3, iter = 5000)
-
