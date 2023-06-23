@@ -30,37 +30,54 @@ hesCom$Species <- "Hesperostipa comata"
 # remove data for individuals that didn't survive
 hesCom_growth <- hesCom[hesCom$survives_tplus1 == 1 & !is.na(hesCom$survives_tplus1) & 
                           !is.na(hesCom$age)  ,]
+# log transform size data
+hesCom_growth$size_t_log <- log(hesCom_growth$basalArea_genet)
+hesCom_growth$size_tplus1_log <- log(hesCom_growth$size_tplus1)
 
-
+plot(size_tplus1_log ~ size_t_log, data = hesCom_growth)
 
 # Prepare simulated data for growth model ---------------------------------
 # predictor variables
 # basal area in the current year
 simDat <- data.frame(basalArea_genet = rlnorm(n = 500, meanlog = .0001, sdlog = .6))/10
 hist(simDat$basalArea_genet)
+# log-transform data
+simDat$size_t_log <- log(simDat$basalArea_genet)
 
 # response variable
 # basal area in the next year
-simDat$size_tplus1 <- 0.0002 + .687 * simDat$basalArea_genet + rnorm(n = nrow(simDat), mean = 0, sd = .01)
-plot(simDat$size_tplus1, simDat$basalArea_genet)
-
-# log-transform data
-simDat$size_t_log <- log(simDat$basalArea_genet)
-simDat$size_tplus1_log <- log(simDat$size_tplus1)
+simDat$size_tplus1_log <- -2.5 + .687 * simDat$size_t_log + rnorm(n = nrow(simDat), mean = 0, sd = .05)
 plot(simDat$size_tplus1_log, simDat$size_t_log)
 
-# Prepare data for Stan model ---------------------------------------------
 
-modMat <- model.matrix(~ basalArea_genet + age , data = hesCom_growth)
-data <- with(hesCom_growth, 
-             list(y = size_tplus1, x = modMat, K = ncol(modMat), N = nrow(hesCom_growth)))
+# Prepare simulated data for Stan model ---------------------------------------------
+
+modMat <- model.matrix(~ size_t_log , data = simDat)
+data <- with(simDat, 
+             list(y = size_tplus1_log, x = modMat[,2], K = ncol(modMat), N = nrow(simDat)))
 
 
-# Run Stan model ----------------------------------------------------------
+# Run simulated data Stan model ----------------------------------------------------------
 
 growthStan <- stan_model("./AnalysisScripts/StanModels/growthModel.stan")
 
-growthStan_fit <- sampling(growthStan, data = data, chains = 4, iter = 8000)
+growthStan_fit_sim <- sampling(growthStan, data = data, chains = 2, iter = 10000)
 
 ## evaluate Stan model: 
-traceplot(growthStan_fit)
+traceplot(growthStan_fit_sim)
+
+# Prepare real data for Stan model ---------------------------------------------
+
+modMat <- model.matrix(~ size_t_log , data = hesCom_growth)
+data <- with(hesCom_growth, 
+             list(y = size_tplus1_log, x = modMat[,2], K = ncol(modMat), N = nrow(hesCom_growth)))
+
+
+# Run simulated data Stan model ----------------------------------------------------------
+
+growthStan <- stan_model("./AnalysisScripts/StanModels/growthModel.stan")
+
+growthStan_fit_sim <- sampling(growthStan, data = data, chains = 2, iter = 10000)
+
+## evaluate Stan model: 
+traceplot(growthStan_fit_sim)
