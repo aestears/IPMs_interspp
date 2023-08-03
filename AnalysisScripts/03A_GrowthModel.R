@@ -36,6 +36,10 @@ hesCom_growth$size_tplus1_log <- log(hesCom_growth$size_tplus1)
 
 plot(size_tplus1_log ~ size_t_log, data = hesCom_growth)
 
+
+# change age to a factor
+hesCom_growth$age_fac <- as.factor(hesCom_growth$age)
+
 # Prepare simulated data for growth model ---------------------------------
 # only has size_t as a predictor, not age
 # predictor variables
@@ -69,7 +73,7 @@ traceplot(growthStan_fit_sim)
 
 # Prepare real data for Stan model ---------------------------------------------
 
-modMat <- model.matrix(~ size_t_log + age, data = hesCom_growth)
+modMat <- model.matrix(~ size_t_log + age_fac, data = hesCom_growth)
 data <- with(hesCom_growth, 
              list(y = size_tplus1_log, x = modMat[,2:3], K = ncol(modMat[,2:3]), N = nrow(hesCom_growth)))
 
@@ -82,3 +86,7 @@ growthStan_fit_real <- sampling(growthStan, data = data, chains = 2, iter = 1000
 
 ## evaluate Stan model: 
 traceplot(growthStan_fit_real)
+
+print(growthStan_fit_real)
+
+summary(glm(hesCom_growth$size_tplus1_log ~ hesCom_growth$size_t_log + hesCom_growth$age_fac))

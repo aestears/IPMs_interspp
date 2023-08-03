@@ -5,7 +5,7 @@ data {
   int<lower=0> K; // number of predictors 
   matrix[N, K] x;   // predictor matrix
   //vector[N] x; //predictor vector
-  vector[N] y;      // outcome vector
+  real y[N];      // outcome vector
 }
 parameters {
   real alpha;           // intercept
@@ -13,11 +13,10 @@ parameters {
   real<lower = 0> sigma;  // error scale
 }
 model {
-  //linear predictor mu
-  vector[N] mu; 
-  // calculate mu
-  mu = alpha + x * beta;
+  // priors
+  alpha ~ normal(0., 10);
+  beta ~ normal(0., 10);
   // likelihood function
-  y ~ normal(mu, sigma);  
+  y ~ normal(alpha + x * beta, sigma);  
 }
 
