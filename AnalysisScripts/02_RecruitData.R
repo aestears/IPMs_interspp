@@ -124,4 +124,9 @@ recsPerAdult_lag1[is.na(recsPerAdult_lag1$n_adults), "n_adults"] <- 1
 
 # calculate the number of recruits per adult in the previous year
 recsPerAdult_lag1$recsPerAdult <- as.numeric(recsPerAdult_lag1$recruits/recsPerAdult_lag1$n_adults)
+
+# remove values for non-matching years
+recsPerAdult_lag1[is.na(recsPerAdult_lag1$Year_t_adults), "recsPerAdult"] <- NA
+
+
 plot(recsPerAdult_lag1$n_adults, recsPerAdult_lag1$recruits)
